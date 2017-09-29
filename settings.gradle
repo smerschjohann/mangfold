@@ -1,0 +1,4 @@
+include "intellij"
+
+rootProject.name = 'mangfold'
+
