@@ -15,9 +15,13 @@ dependencies {
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
     compile group: 'com.google.code.gson', name: 'gson', version: '2.3.1'
     compile 'ch.qos.logback:logback-classic:0.9.26'
-    compile 'org.jetbrains.kotlin:kotlin-stdlib:1.1.2-3'
-    compile 'org.jetbrains.kotlin:kotlin-compiler:1.1.2-3'
-    compile 'org.jetbrains.kotlin:kotlin-script-util:1.1.2-3'
+
+    compile group: 'org.python', name: 'jython-standalone', version: '2.7.1'
+
+    compile 'org.jetbrains.kotlin:kotlin-stdlib:1.1.51'
+    compile 'org.jetbrains.kotlin:kotlin-compiler:1.1.51'
+    compile 'org.jetbrains.kotlin:kotlin-script-util:1.1.51'
+
     testCompile(
 
             'org.codehaus.groovy:groovy-all:2.4.4',

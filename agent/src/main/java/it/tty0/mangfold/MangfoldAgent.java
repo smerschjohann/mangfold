@@ -33,7 +33,7 @@ public class MangfoldAgent {
         return this;
     }
 
-    public void start() {
+    public MangfoldAgent start() {
         try {
             server = new MangfoldServer(port, scriptRunner);
             server.init();
@@ -49,6 +49,8 @@ public class MangfoldAgent {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        return this;
     }
 
     public void stop() {
@@ -67,8 +69,8 @@ public class MangfoldAgent {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        final MangfoldAgent agent = new MangfoldAgent(14237, Thread.currentThread().getContextClassLoader());
-        agent.start();
-        agent.blockUntilShutdown();
+        new MangfoldAgent(14237, Thread.currentThread().getContextClassLoader())
+                .start()
+                .blockUntilShutdown();
     }
 }

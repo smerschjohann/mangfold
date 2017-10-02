@@ -37,6 +37,7 @@ public class ScriptRunner {
 
         engine = this.scriptEngineFactory.createScriptEngine(language);
         if(engine != null) {
+            runningScriptEngines.put(language, engine);
             scriptEngineFactory.scopeValues(engine, bindings);
             return Optional.of(engine);
         }

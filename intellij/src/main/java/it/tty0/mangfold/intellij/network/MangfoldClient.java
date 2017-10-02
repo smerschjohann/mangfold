@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -102,8 +103,8 @@ public class MangfoldClient {
         try {
             clientSocket.connect(new InetSocketAddress(server, port), CONNECT_TIMEOUT);
             connectionEstablished();
-        } catch (IOException e) {
-            log.error("", e);
+        } catch (Exception e) {
+            log.error("could not connect", e);
         }
     }
 
@@ -133,58 +134,47 @@ public class MangfoldClient {
     }
 
     private void sendQueue() {
-        DataOutputStream outputStream;
         try {
-            outputStream = new DataOutputStream(clientSocket.getOutputStream());
-        } catch (IOException e) {
-            log.error("io", e);
-            return;
+            DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
+
+            while (clientSocket.isConnected() && !shutdown) {
+                try {
+                    QueueEntry entry = queue.poll(2, TimeUnit.SECONDS);
+                    if (entry != null) {
+                        String request = gson.toJson(entry.request);
+                        try {
+                            final byte[] utf8Bytes = request.getBytes("UTF-8");
+                            outputStream.writeInt(utf8Bytes.length);
+                            outputStream.write(utf8Bytes);
+                            awaitReceive.put(entry.request.getId(), entry.future);
+                        } catch (IOException e) {
+                            log.error("io", e);
+                            return;
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        } catch(Exception ex) {
+            log.info("disconnected");
         }
 
-        while(clientSocket.isConnected() && !shutdown) {
-            try {
-                QueueEntry entry = queue.poll(2, TimeUnit.SECONDS);
-                if(entry != null) {
-                    String request = gson.toJson(entry.request);
-                    try {
-                        final byte[] utf8Bytes= request.getBytes("UTF-8");
-                        outputStream.writeInt(utf8Bytes.length);
-                        outputStream.write(utf8Bytes);
-                        awaitReceive.put(entry.request.getId(), entry.future);
-                    } catch (IOException e) {
-                        log.error("io", e);
-                        return;
-                    }
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
+        disconnected();
     }
 
     private void receive() {
-        DataInputStream inputStream;
         try {
-            InputStream in = clientSocket.getInputStream();
-            inputStream = new DataInputStream(in);
-        } catch (Exception ex) {
-            log.error("", ex);
-            return;
-        }
+            DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
 
-        try {
             while (clientSocket.isConnected() && !shutdown) {
-                try {
-                    int len = inputStream.readInt();
-                    byte[] data = new byte[len];
-                    if (len > 0) {
-                        inputStream.readFully(data);
-                    }
-
-                    consumeMessage(data);
-                } catch (IOException e) {
-                    log.error("io error", e);
+                int len = inputStream.readInt();
+                byte[] data = new byte[len];
+                if (len > 0) {
+                    inputStream.readFully(data);
                 }
+
+                consumeMessage(data);
             }
         } catch(Exception ex) {
             log.info("possibly disconnected", ex);
