@@ -1,5 +1,16 @@
+version '1.0.0'
+
+apply plugin: 'org.jetbrains.intellij'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
 buildscript {
     repositories {
+        mavenCentral()
         maven {
             url "https://plugins.gradle.org/m2/"
         }
@@ -12,5 +23,3 @@ buildscript {
         classpath "gradle.plugin.org.jetbrains:gradle-intellij-plugin:0.1.10"
     }
 }
-
-apply plugin: 'org.jetbrains.intellij'

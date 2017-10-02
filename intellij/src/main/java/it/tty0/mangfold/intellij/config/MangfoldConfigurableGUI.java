@@ -1,4 +1,4 @@
-package config;
+package it.tty0.mangfold.intellij.config;
 
 import com.google.common.base.Strings;
 

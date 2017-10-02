@@ -18,19 +18,19 @@
     <idea-version since-build="145.0"/>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationConfigurable groupId="tools" displayName="Mangfold" id="preferences.MangfoldConfigurable" instance="config.MangfoldConfigurable" />
-        <applicationService serviceInterface="config.MangfoldConfig" serviceImplementation="config.MangfoldConfig" />
+        <applicationConfigurable groupId="tools" displayName="Mangfold" id="preferences.MangfoldConfigurable" instance="it.tty0.mangfold.intellij.config.MangfoldConfigurable" />
+        <applicationService serviceInterface="it.tty0.mangfold.intellij.config.MangfoldConfig" serviceImplementation="it.tty0.mangfold.intellij.config.MangfoldConfig" />
     </extensions>
 
     <actions>
         <group id="Mangfold" text="Mangfold" popup="true">
             <add-to-group group-id="RunMenu" anchor="first" />
             <add-to-group group-id="EditorPopupMenu.Run" anchor="first" />
-            <action id="Mangfold.RunScript" class="RunScript" text="Run JSR Script in App"
+            <action id="Mangfold.RunScript" class="it.tty0.mangfold.intellij.RunScript" text="Run JSR Script in App"
                     description="Executes the script in the connected application">
                 <keyboard-shortcut keymap="$default" first-keystroke="ctrl NUMBER_SIGN"/>
             </action>
-            <action id="Mangfold.RunSelected" class="RunSelected" text="Run selected JSR"
+            <action id="Mangfold.RunSelected" class="it.tty0.mangfold.intellij.RunSelected" text="Run selected JSR"
                     description="runs the selected script area">
                 <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl NUMBER_SIGN"/>
             </action>

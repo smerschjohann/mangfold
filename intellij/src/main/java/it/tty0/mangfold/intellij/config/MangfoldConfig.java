@@ -1,4 +1,4 @@
-package config;
+package it.tty0.mangfold.intellij.config;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;

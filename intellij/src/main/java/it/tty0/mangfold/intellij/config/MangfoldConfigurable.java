@@ -1,7 +1,8 @@
-package config;
+package it.tty0.mangfold.intellij.config;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import it.tty0.mangfold.intellij.Connection;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,5 +50,6 @@ public class MangfoldConfigurable implements SearchableConfigurable {
     @Override
     public void apply() throws ConfigurationException {
         gui.apply();
+        Connection.getSingleton().init();
     }
 }
