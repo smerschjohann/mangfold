@@ -14,6 +14,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.charset.Charset;
+import java.rmi.ConnectException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.*;
@@ -103,6 +104,8 @@ public class MangfoldClient {
         try {
             clientSocket.connect(new InetSocketAddress(server, port), CONNECT_TIMEOUT);
             connectionEstablished();
+        } catch (ConnectException e) {
+            log.warn("could not connect");
         } catch (Exception e) {
             log.error("could not connect", e);
         }
@@ -138,22 +141,18 @@ public class MangfoldClient {
             DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
 
             while (clientSocket.isConnected() && !shutdown) {
-                try {
-                    QueueEntry entry = queue.poll(2, TimeUnit.SECONDS);
-                    if (entry != null) {
-                        String request = gson.toJson(entry.request);
-                        try {
-                            final byte[] utf8Bytes = request.getBytes("UTF-8");
-                            outputStream.writeInt(utf8Bytes.length);
-                            outputStream.write(utf8Bytes);
-                            awaitReceive.put(entry.request.getId(), entry.future);
-                        } catch (IOException e) {
-                            log.error("io", e);
-                            return;
-                        }
+                QueueEntry entry = queue.poll(2, TimeUnit.SECONDS);
+                if (entry != null) {
+                    String request = gson.toJson(entry.request);
+                    try {
+                        final byte[] utf8Bytes = request.getBytes("UTF-8");
+                        outputStream.writeInt(utf8Bytes.length);
+                        outputStream.write(utf8Bytes);
+                        awaitReceive.put(entry.request.getId(), entry.future);
+                    } catch (IOException e) {
+                        log.error("io", e);
+                        return;
                     }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
                 }
             }
         } catch(Exception ex) {
