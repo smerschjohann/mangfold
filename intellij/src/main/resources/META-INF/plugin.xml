@@ -1,12 +1,14 @@
 <idea-plugin>
     <id>it.tty0.mangfold</id>
     <name>Mangfold JSR Executor</name>
-    <version>1.0</version>
+    <version>1.0.1</version>
     <vendor email="dev@tty0.it" url="http://tty0.it">tty0.it</vendor>
 
     <description>
-        This Plugin allows in combination with mangfold-client.jar to inject scripts in java applications.
+        This Plugin allows in combination with mangfold-agent.jar to inject scripts in java applications.
         This can be especially helpful during development of APIs or tests.
+
+        See an example on https://github.com/smerschjohann/mangfold
     </description>
 
     <change-notes><![CDATA[
