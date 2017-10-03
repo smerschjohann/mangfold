@@ -2,7 +2,7 @@ plugins {
     id "com.jfrog.bintray" version "1.7.3"
 }
 
-version '1.0.0'
+version '1.0.1'
 
 group 'it.tty0.mangfold'
 
@@ -37,11 +37,11 @@ dependencies {
 
 publishing {
     publications {
-        MyPublication(MavenPublication) {
+        Agent(MavenPublication) {
             from components.java
             groupId "it.tty0.mangfold"
             artifactId 'mangfold-agent'
-            version '1.0.0'
+            version '1.0.1'
         }
     }
 }
@@ -49,7 +49,7 @@ publishing {
 bintray {
     user = System.getenv("BINTRAY_USER")
     key = System.getenv("BINTRAY_KEY")
-    publications = ['MyPublication']
+    publications = ['Agent']
     pkg {
         repo = "generic"
         name = "mangfold-agent"
@@ -59,9 +59,9 @@ bintray {
         labels = ['development', 'jsr223', 'intellij']
         publicDownloadNumbers = true
         version {
-            name = "1.0.0"
-            desc = "Mangfold Agent Plugin 1.0.0"
-            vcsTag = "1.0.0"
+            name = "1.0.1"
+            desc = "Mangfold Agent Plugin 1.0.1"
+            vcsTag = "1.0.1"
         }
     }
 }
