@@ -1,12 +1,11 @@
 # General
 _Mangfold_ is a tool for development purposes. It provides scripting functionality at runtime of your application.
-The scripts can be developed and run directly from _IntelliJ_ allowing code completion and other gimmicks only a true IDE can offer.
+The scripts can be developed and be executed directly from _IntelliJ_ allowing code completion and other gimmicks only a true IDE can offer.
 
-One usecase of this library is testing. It allows to run your application in an nearly unaltered way with all threads running that might be needed for complete functionality tests. 
-For example if one wants to test an API which needs to communicate with other services, there is an initialization phase which would make iterational unit tests undesirable.
+One usecase of this library is testing. It allows to run your application in an nearly unaltered way with all other application logic running that might be needed for complete functionality tests.
 
 # Example
-In the following I will give a short example how this library can be used:
+In the following I will give a short example how this library can be used with the API called `ClientAPI`. It consists of an simple interface:
 
 ```java
 public interface ClientAPI {
@@ -16,16 +15,13 @@ public interface ClientAPI {
     void rpcOne(String function, String param, CompletableFuture<String> result);
     void rpcTwo(String function, String param, CompletableFuture<String> result);
     void rpcThree(String function, String param, CompletableFuture<String> result);
-    void rpcFour(String function, String param, CompletableFuture<String> result);
-    void rpcFive(String function, String param, CompletableFuture<String> result);
 }
 ```
 
-The Client API will connect to the server by calling open and keeps the connection open until `close()` is called.
-If one wants to test the functionality of this API, it would be nice to test it without having to restart the application.
-NOTE: This should always be just an addition to normal unit tests.
+In this case the _Client API_ has some initial handshake mechanism hidden behind the `open()` method, which should not be executed too frequently as it is an online service with rate limits active.
+Nevertheless, if one wants to test the functionality of this API and the remote service, it would be nice to test it without reconnecting and recompilation.
 
-So one would add the following to the application code and add the dependencies to either maven or gradle:
+This problem can be solved with _mangfold_, simply create and run an instance of the `MangfoldAgent` from anywhere in you application and add the dependencies to maven.
 
 ## Java
 ```java
@@ -45,6 +41,7 @@ public class Starter {
 ## Maven
 ```maven
 <dependencies>
+	<!-- at the current time this has to be installed manually to the local maven repository -->
     <dependency>
         <groupId>it.tty0.mangfold</groupId>
         <artifactId>mangfold-agent</artifactId>
@@ -80,6 +77,13 @@ public class Starter {
     </dependency>
 </dependencies>
 ```
+
+# IntelliJ
+In _IntelliJ_ you have to install the _Mangfold-Plugin_. At the current time it is not deployed to the IntelliJ store, so you have to install it from local disk.
+
+After installation, go to `settings -> Tools -> Mangfold` and select the host and port of the system running the agent.
+
+Now create a script file e.g. .kts for kotlin, .py for python, .js for JavaScript or .groovy for groovy. You can now execute the contents of this file with the combination `CTRL + #`. To execute only the selection or if no selection exists, the line of the current caret position hit `CTRL + SHIFT + #`.
 
 
 # FAQ
