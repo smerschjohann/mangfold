@@ -27,11 +27,10 @@ public class MangfoldClient {
 
     ExecutorService sender = Executors.newSingleThreadExecutor();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    private int CONNECT_TIMEOUT = 49 * 1000;
+    private int CONNECT_TIMEOUT = 5 * 1000;
     private ArrayList<ConnectionListener> listeners = new ArrayList<>();
     private Socket clientSocket;
     private ScheduledFuture<?> keepAliveTimer;
-    private ScheduledFuture<?> connectTimer;
     private boolean shutdown = false;
 
     private int incrementalCounter = 0;
@@ -44,14 +43,6 @@ public class MangfoldClient {
     private LinkedBlockingQueue<QueueEntry> queue = new LinkedBlockingQueue<>();
     private HashMap<Integer, CompletableFuture<ScriptResponse>> awaitReceive = new HashMap<>();
 
-    public void addConnectionListener(ConnectionListener listener) {
-        listeners.add(listener);
-    }
-    
-    public void removeConnectionListener(ConnectionListener listener) {
-        listeners.remove(listener);
-    }
-    
     public MangfoldClient(String server, int port) throws IOException {
         this.server = server;
         this.port = port;
@@ -62,33 +53,42 @@ public class MangfoldClient {
     }
 
     private CompletableFuture<ScriptResponse> sendMessage(ScriptRequest scriptRequest) {
-        connect();
-        QueueEntry entry = new QueueEntry();
-        entry.request = new ScriptRequest(incrementalCounter++, scriptRequest.getLanguage(), scriptRequest.getCode());
-        entry.future = new CompletableFuture<>();
-        queue.add(entry);
-        return entry.future;
+        if(connect()) {
+            QueueEntry entry = new QueueEntry();
+            entry.request = new ScriptRequest(incrementalCounter++, scriptRequest.getLanguage(), scriptRequest.getCode());
+            entry.future = new CompletableFuture<>();
+            queue.add(entry);
+            return entry.future;
+        } else {
+            return CompletableFuture.completedFuture(
+                    new ScriptResponse(0, ScriptResponse.State.ERROR, String.format("Could not connect to %s:%s",
+                            server, port)));
+        }
     }
 
-    public void connect() {
+    private boolean connect() {
         shutdown = false;
-        if(connectTimer == null && keepAliveTimer == null) {
-            connectTimer = scheduler.scheduleWithFixedDelay(this::connectInternal, 0, 10, TimeUnit.SECONDS);
+        if(clientSocket == null) {
+            clientSocket = new Socket();
+            try {
+                clientSocket.connect(new InetSocketAddress(server, port), CONNECT_TIMEOUT);
+                connectionEstablished();
+            } catch (Exception e) {
+                log.info("could not connect to {}:{}", server, port);
+                clientSocket = null;
+            }
         }
+        return clientSocket != null;
     }
 
     public void disconnect() {
-        if(connectTimer != null) {
-            connectTimer.cancel(true);
-            connectTimer = null;
-        }
-
         if(keepAliveTimer != null) {
             keepAliveTimer.cancel(true);
             keepAliveTimer = null;
         }
 
         if(clientSocket != null) {
+            disconnected();
             shutdown = true;
             try {
                 clientSocket.close();
@@ -99,21 +99,7 @@ public class MangfoldClient {
         }
     }
 
-    private void connectInternal() {
-        clientSocket = new Socket();
-        try {
-            clientSocket.connect(new InetSocketAddress(server, port), CONNECT_TIMEOUT);
-            connectionEstablished();
-        } catch (ConnectException e) {
-            log.warn("could not connect");
-        } catch (Exception e) {
-            log.error("could not connect", e);
-        }
-    }
-
     private void connectionEstablished() {
-        connectTimer.cancel(false);
-        connectTimer = null;
         keepAliveTimer = scheduler.scheduleAtFixedRate(() -> {
             sender.submit(() -> {
                 if(queue.isEmpty() && awaitReceive.isEmpty()) {
@@ -144,22 +130,16 @@ public class MangfoldClient {
                 QueueEntry entry = queue.poll(2, TimeUnit.SECONDS);
                 if (entry != null) {
                     String request = gson.toJson(entry.request);
-                    try {
-                        final byte[] utf8Bytes = request.getBytes("UTF-8");
-                        outputStream.writeInt(utf8Bytes.length);
-                        outputStream.write(utf8Bytes);
-                        awaitReceive.put(entry.request.getId(), entry.future);
-                    } catch (IOException e) {
-                        log.error("io", e);
-                        return;
-                    }
+                    final byte[] utf8Bytes = request.getBytes("UTF-8");
+                    outputStream.writeInt(utf8Bytes.length);
+                    outputStream.write(utf8Bytes);
+                    awaitReceive.put(entry.request.getId(), entry.future);
                 }
             }
         } catch(Exception ex) {
             log.info("disconnected");
+            clearState();
         }
-
-        disconnected();
     }
 
     private void receive() {
@@ -177,9 +157,8 @@ public class MangfoldClient {
             }
         } catch(Exception ex) {
             log.info("possibly disconnected", ex);
+            clearState();
         }
-
-        disconnected();
     }
 
     private void disconnected() {
@@ -191,8 +170,8 @@ public class MangfoldClient {
             }
         });
 
-        if(!shutdown) {
-            connect();
+        if(keepAliveTimer != null) {
+            keepAliveTimer.cancel(true);
         }
     }
 
@@ -206,6 +185,11 @@ public class MangfoldClient {
         } else {
             log.error("unexpected message: {}", response);
         }
+    }
+
+    private void clearState() {
+        queue.clear();
+        disconnect();
     }
 
 }
