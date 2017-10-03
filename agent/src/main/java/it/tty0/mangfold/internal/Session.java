@@ -61,18 +61,14 @@ public class Session implements Runnable {
     private void consumeMessage(Socket socket, byte[] data) {
         ScriptRequest request = gson.fromJson(new String(data, Charset.forName("UTF-8")), ScriptRequest.class);
 
-        if(request.getType() == ScriptRequest.Type.KEEP_ALIVE || request.getLanguage() == null) {
-            sendResponse(socket, new ScriptResponse(request.getId(), ScriptResponse.State.OK, ""));
-        } else {
-            service.runScript(request).handle((response, throwable) -> {
-                ScriptResponse resp = response;
-                if (throwable != null) {
-                    resp = new ScriptResponse(request.getId(), ERROR, throwable.getMessage());
-                }
-                sendResponse(socket, resp);
-                return null;
-            });
-        }
+        service.handleRequest(request).handle((response, throwable) -> {
+            ScriptResponse resp = response;
+            if (throwable != null) {
+                resp = new ScriptResponse(request.getId(), ERROR, throwable.getMessage());
+            }
+            sendResponse(socket, resp);
+            return null;
+        });
     }
 
     private void sendResponse(Socket socket, ScriptResponse resp) {

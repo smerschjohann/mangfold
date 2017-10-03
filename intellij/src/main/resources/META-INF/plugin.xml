@@ -34,6 +34,10 @@
                     description="runs the selected script area">
                 <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl NUMBER_SIGN"/>
             </action>
+            <action id="Mangfold.ClearScriptEngine" class="it.tty0.mangfold.intellij.ClearScriptEngine" text="Clear ScriptEngine"
+                    description="clears a script engine">
+                <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt NUMBER_SIGN"/>
+            </action>
         </group>
     </actions>
 

@@ -3,7 +3,8 @@ package it.tty0.mangfold.internal;
 public class ScriptRequest {
     public enum Type {
         KEEP_ALIVE,
-        RUN
+        RUN,
+        CLEAR
     }
     private final Type type;
     private final int id;

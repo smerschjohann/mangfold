@@ -3,7 +3,8 @@ package it.tty0.mangfold.intellij.network;
 public class ScriptRequest {
     public enum Type {
         KEEP_ALIVE,
-        RUN
+        RUN,
+        CLEAR
     }
     private final Type type;
     private final int id;
@@ -17,8 +18,8 @@ public class ScriptRequest {
         this.code = null;
     }
 
-    public ScriptRequest(int id, String language, String code) {
-        this.type = Type.RUN;
+    public ScriptRequest(Type type, int id, String language, String code) {
+        this.type = type;
         this.id = id;
         this.language = language;
         this.code = code;
@@ -34,5 +35,9 @@ public class ScriptRequest {
 
     public String getCode() {
         return code;
+    }
+
+    public Type getType() {
+        return type;
     }
 }

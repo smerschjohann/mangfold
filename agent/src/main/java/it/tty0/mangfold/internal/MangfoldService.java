@@ -27,33 +27,55 @@ public class MangfoldService {
         this.scriptRunner = scriptRunner;
     }
 
-    public CompletableFuture<ScriptResponse> runScript(ScriptRequest request) {
-        int id = request.getId();
-        log.info("> runScript() request={} id={}", request, id);
+    public CompletableFuture<ScriptResponse> handleRequest(ScriptRequest request) {
         try {
-            Optional<ScriptEngine> scriptEngine = scriptRunner.getScriptEngine(request.getLanguage());
-            if (!scriptEngine.isPresent()) {
-                String description = "language " + request.getLanguage() + " not supported";
-                log.warn(description);
-                return CompletableFuture.completedFuture(new ScriptResponse(id, ERROR, description));
-            } else {
-                return CompletableFuture.supplyAsync(() -> {
-                    try {
-                        Object resultObject = scriptEngine.get().eval(request.getCode());
-
-                        String result = toResultString(resultObject);
-                        log.info("< runScript() id={}, result={}", id, result);
-                        return new ScriptResponse(id, OK, result);
-                    } catch (ScriptException e) {
-                        log.error("< runScript() id={}, error in script ", id, e);
-                        return new ScriptResponse(id, ERROR, ExceptionUtils.getStackTrace(e));
-                    }
-                }, executorService);
+            switch (request.getType()) {
+                case KEEP_ALIVE:
+                    return keepAliveResponse(request);
+                case RUN:
+                    return runScript(request);
+                case CLEAR:
+                    return clearEngine(request);
             }
         } catch (Exception ex) {
             log.error("exception", ex);
-            return CompletableFuture.completedFuture(new ScriptResponse(id, ERROR, "error: " + ex.getMessage()));
+            return CompletableFuture.completedFuture(new ScriptResponse(request.getId(), ERROR, "error: " + ex.getMessage()));
         }
+        return CompletableFuture.completedFuture(new ScriptResponse(request.getId(), ERROR, "should never happen"));
+    }
+
+    private CompletableFuture<ScriptResponse> keepAliveResponse(ScriptRequest request) {
+        return CompletableFuture.completedFuture(new ScriptResponse(request.getId(), ScriptResponse.State.OK, ""));
+    }
+
+    private CompletableFuture<ScriptResponse> runScript(ScriptRequest request) {
+        int id = request.getId();
+        log.info("> runScript() request={} id={}", request, id);
+
+        Optional<ScriptEngine> scriptEngine = scriptRunner.getScriptEngine(request.getLanguage());
+        if (!scriptEngine.isPresent()) {
+            String description = "language " + request.getLanguage() + " not supported";
+            log.warn(description);
+            return CompletableFuture.completedFuture(new ScriptResponse(id, ERROR, description));
+        } else {
+            return CompletableFuture.supplyAsync(() -> {
+                try {
+                    Object resultObject = scriptEngine.get().eval(request.getCode());
+
+                    String result = toResultString(resultObject);
+                    log.info("< runScript() id={}, result={}", id, result);
+                    return new ScriptResponse(id, OK, result);
+                } catch (ScriptException e) {
+                    log.error("< runScript() id={}, error in script ", id, e);
+                    return new ScriptResponse(id, ERROR, ExceptionUtils.getStackTrace(e));
+                }
+            }, executorService);
+        }
+    }
+
+    private CompletableFuture<ScriptResponse> clearEngine(ScriptRequest request) {
+        scriptRunner.clearEngine(request.getLanguage());
+        return CompletableFuture.completedFuture(new ScriptResponse(request.getId(), OK, request.getLanguage() + " cleared"));
     }
 
     private String toResultString(Object resultObject) {

@@ -30,6 +30,10 @@ public class ScriptRunner {
         return this;
     }
 
+    public void clearEngine(String language) {
+        runningScriptEngines.remove(language);
+    }
+
     public Optional<ScriptEngine> getScriptEngine(String language) {
         ScriptEngine engine = runningScriptEngines.get(language);
         if(engine != null)

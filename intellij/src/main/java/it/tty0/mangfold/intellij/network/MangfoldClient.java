@@ -48,14 +48,18 @@ public class MangfoldClient {
         this.port = port;
     }
 
+    public CompletableFuture<ScriptResponse> clearEngine(String language) {
+        return sendMessage(new ScriptRequest(ScriptRequest.Type.CLEAR, 0, language, null));
+    }
+
     public CompletableFuture<ScriptResponse> runRemote(String language, String code) {
-        return sendMessage(new ScriptRequest(0, language, code));
+        return sendMessage(new ScriptRequest(ScriptRequest.Type.RUN, 0, language, code));
     }
 
     private CompletableFuture<ScriptResponse> sendMessage(ScriptRequest scriptRequest) {
         if(connect()) {
             QueueEntry entry = new QueueEntry();
-            entry.request = new ScriptRequest(incrementalCounter++, scriptRequest.getLanguage(), scriptRequest.getCode());
+            entry.request = new ScriptRequest(scriptRequest.getType(), incrementalCounter++, scriptRequest.getLanguage(), scriptRequest.getCode());
             entry.future = new CompletableFuture<>();
             queue.add(entry);
             return entry.future;
